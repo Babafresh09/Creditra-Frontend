@@ -23,7 +23,8 @@
  *   - Criterion 2.1.2 (No Keyboard Trap): Focus is constrained within the dialog via `useFocusTrap`;
  *     Escape, the close button and a backdrop click dismiss it when `onDismiss` is provided.
  *   - Criterion 2.4.3 (Focus Order): Focus is placed on the first interactive control on mount and
- *     restored to `triggerRef` or prior active element on close.
+ *     restored to `triggerRef` or prior active element on close, with a fallback to the first `main`
+ *     landmark when the previous element has been detached while the dialog was open.
  *   - Criterion 4.1.2 (Name, Role, Value): Modal container implements `role="dialog"`, `aria-modal="true"`,
  *     `aria-labelledby` linking to the dynamic step title, and `aria-describedby` linking to the step body.
  *     Step indicator communicates state via `aria-current="step"`.
