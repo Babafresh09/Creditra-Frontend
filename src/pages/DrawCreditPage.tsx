@@ -95,6 +95,8 @@ export default function DrawCreditPage() {
       readJson<boolean>(DEFAULT_RISK_BANNER_DISMISSED_KEY, false)
   );
   const [isRiskModalOpen, setIsRiskModalOpen] = useState(() => isLearnMode);
+  const riskBannerTriggerRef = useRef<HTMLButtonElement>(null);
+  const stepHeadingRef = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
     if (isLearnMode) {
@@ -111,6 +113,23 @@ export default function DrawCreditPage() {
     }
     setIsRiskModalOpen(false);
   }, [isLearnMode, searchParams, setSearchParams]);
+
+  const handleRiskModalDismiss = useCallback(() => {
+    closeRiskModal();
+    // The banner stays mounted (hidden) while the modal is open, so the
+    // trigger is still connected and can receive focus after the exit
+    // animation completes.
+    requestAnimationFrame(() => {
+      riskBannerTriggerRef.current?.focus();
+    });
+  }, [closeRiskModal]);
+
+  const handleRiskModalAcknowledgeAndFocus = useCallback(() => {
+    handleRiskModalAcknowledge();
+    requestAnimationFrame(() => {
+      stepHeadingRef.current?.focus();
+    });
+  }, [handleRiskModalAcknowledge]);
 
   const handleRiskModalAcknowledge = useCallback(() => {
     writeJson(DEFAULT_RISK_ACK_KEY, true);
@@ -339,22 +358,24 @@ export default function DrawCreditPage() {
     <main className="dc-page" aria-label="Draw credit">
       <DefaultRiskModal
         isOpen={isRiskModalOpen}
-        onAcknowledge={handleRiskModalAcknowledge}
-        onDismiss={closeRiskModal}
+        onAcknowledge={handleRiskModalAcknowledgeAndFocus}
+        onDismiss={handleRiskModalDismiss}
+        triggerRef={riskBannerTriggerRef}
       />
       <LiveRegion
         id="draw-wizard-progress-announcement"
         message={microProgressAnnouncement}
       />
       <div className="dc-page__inner">
-        {!hasAcknowledgedRisk && !isRiskModalOpen && (
-          <div className="dc-risk-banner" role="note">
+        {!hasAcknowledgedRisk && (
+          <div className="dc-risk-banner" role="note" hidden={isRiskModalOpen}>
             <p className="dc-risk-banner__text">
               <strong>First draw?</strong> Take a 1-minute primer on what a
               default is and how to avoid one.
             </p>
             <div className="dc-risk-banner__actions">
               <button
+                ref={riskBannerTriggerRef}
                 type="button"
                 className="dc-risk-banner__learn"
                 onClick={() => setIsRiskModalOpen(true)}
@@ -373,6 +394,9 @@ export default function DrawCreditPage() {
           </div>
         )}
         <div className="dc-page__card">
+          <h2 ref={stepHeadingRef} tabIndex={-1} className="sr-only">
+            Draw credit step
+          </h2>
           {step === "select" && (
             <>
               <CreditLineSelector
